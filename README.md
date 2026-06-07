@@ -7,6 +7,16 @@ Two front-ends, one verified engine:
 - **`index.html`** — a self-contained web app (no build, no dependencies — just open it in a browser).
 - **`PokerAdvisor-iOS/`** — a native **SwiftUI** iPhone app with a premium dark UI.
 
+## Screenshots
+
+<p align="center">
+  <img src="screenshots/ios-main.png" width="280" alt="Pick your cards" />
+  &nbsp;&nbsp;
+  <img src="screenshots/ios-verdict.png" width="280" alt="Get the verdict" />
+</p>
+
+<p align="center"><em>Pick your hand &amp; board, then get a math-backed verdict with full equity breakdown.</em></p>
+
 ---
 
 ## How it works

@@ -6,80 +6,81 @@
 <title>Poker Advisor</title>
 <style>
   :root{
-    --felt:#0b6b3a; --felt2:#085c31; --ink:#0d1f17; --gold:#e8c14a;
-    --card:#fdfdfb; --red:#d23b3b; --black:#1c1c1c; --line:rgba(255,255,255,.15);
+    --bg1:#0d0d0f; --bg2:#000; --panel:#161618; --edge:rgba(255,255,255,.09);
+    --card:#fff; --red:#d6373a; --black:#141414; --line:rgba(255,255,255,.08);
+    --hi:#ffffff; --lo:rgba(255,255,255,.55); --faint:rgba(255,255,255,.36);
   }
   *{box-sizing:border-box}
   body{
-    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    background:radial-gradient(120% 90% at 50% 0%,var(--felt) 0%,var(--felt2) 55%,#053c20 100%);
-    color:#f4f7f4; min-height:100vh; padding:24px 16px 60px;
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(120% 80% at 50% 0%,var(--bg1) 0%,var(--bg2) 70%);
+    color:var(--hi); min-height:100vh; padding:26px 16px 60px; -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:640px;margin:0 auto}
-  h1{font-size:22px;font-weight:700;letter-spacing:.3px;margin:0 0 2px;display:flex;align-items:center;gap:8px}
-  h1 .chip{color:var(--gold)}
-  .sub{font-size:13px;opacity:.7;margin:0 0 22px}
-  .panel{background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px;backdrop-filter:blur(2px)}
-  .label{font-size:12px;text-transform:uppercase;letter-spacing:.8px;opacity:.65;margin:0 0 10px;font-weight:600}
+  .wrap{max-width:560px;margin:0 auto}
+  h1{font-size:23px;font-weight:800;letter-spacing:2px;margin:0 0 3px;text-align:center;text-transform:uppercase}
+  h1 .chip{color:var(--hi);letter-spacing:0}
+  .sub{font-size:12.5px;color:var(--lo);text-align:center;margin:0 0 22px}
+  .panel{background:var(--panel);border:1px solid var(--edge);border-radius:18px;padding:16px;margin-bottom:14px}
+  .label{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--lo);margin:0 0 12px;font-weight:600}
   .slots{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .slot{
-    width:48px;height:66px;border-radius:8px;border:2px dashed rgba(255,255,255,.25);
-    display:flex;align-items:center;justify-content:center;font-size:11px;opacity:.55;text-align:center;line-height:1.1;
+    width:48px;height:66px;border-radius:9px;border:1.5px dashed var(--faint);
+    display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--faint);text-align:center;line-height:1.1;
   }
   .pcard{
-    width:48px;height:66px;border-radius:8px;background:var(--card);color:var(--black);
-    display:flex;align-items:center;justify-content:center;flex-direction:column;font-weight:700;
-    box-shadow:0 3px 8px rgba(0,0,0,.35);cursor:pointer;user-select:none;position:relative;
+    width:48px;height:66px;border-radius:9px;background:var(--card);color:var(--black);
+    display:flex;align-items:center;justify-content:center;flex-direction:column;font-weight:800;
+    box-shadow:0 3px 9px rgba(0,0,0,.45);cursor:pointer;user-select:none;position:relative;
   }
   .pcard .r{font-size:20px;line-height:1}
-  .pcard .s{font-size:16px;line-height:1}
+  .pcard .s{font-size:15px;line-height:1.1}
   .pcard.red{color:var(--red)}
   .pcard.mini{width:34px;height:46px}
   .pcard.mini .r{font-size:14px}
   .pcard.mini .s{font-size:12px}
-  .stage-tag{font-size:11px;opacity:.6;margin-left:6px}
+  .stage-tag{font-size:11px;color:var(--faint);margin-left:6px;letter-spacing:0}
 
-  .deck{margin-top:4px}
+  .deck{margin-top:2px}
   .suitrow{display:grid;grid-template-columns:repeat(13,1fr);gap:5px;margin-bottom:6px}
   .dcard{
-    aspect-ratio:3/4;border-radius:6px;background:var(--card);color:var(--black);
-    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;
-    cursor:pointer;user-select:none;border:1px solid rgba(0,0,0,.15);transition:transform .05s;
+    aspect-ratio:3/4;border-radius:7px;background:var(--card);color:var(--black);
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;
+    cursor:pointer;user-select:none;border:1px solid rgba(0,0,0,.12);transition:transform .06s,opacity .12s;
   }
   .dcard:hover{transform:translateY(-2px)}
   .dcard.red{color:var(--red)}
-  .dcard.used{opacity:.22;pointer-events:none;filter:grayscale(.4)}
+  .dcard.used{opacity:.2;pointer-events:none}
 
   .controls{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
   .field{display:flex;flex-direction:column;gap:6px;flex:1;min-width:120px}
-  .field label{font-size:12px;opacity:.7}
+  .field label{font-size:12px;color:var(--lo)}
   input[type=number]{
-    background:rgba(0,0,0,.25);border:1px solid var(--line);color:#fff;border-radius:8px;
-    padding:9px 11px;font-size:15px;width:100%;
+    background:#0e0e10;border:1px solid var(--edge);color:#fff;border-radius:10px;
+    padding:11px 12px;font-size:15px;width:100%;
   }
-  input:focus{outline:none;border-color:var(--gold)}
-  .btnrow{display:flex;gap:10px;margin-top:6px}
+  input:focus{outline:none;border-color:rgba(255,255,255,.4)}
+  .btnrow{display:flex;gap:10px;margin-top:14px}
   button.act{
-    flex:1;background:var(--gold);color:#3a2c00;border:none;border-radius:10px;padding:13px;
-    font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.3px;
+    flex:1;background:var(--hi);color:#000;border:none;border-radius:13px;padding:15px;
+    font-size:16px;font-weight:700;cursor:pointer;letter-spacing:.2px;
   }
   button.act:active{transform:translateY(1px)}
-  button.ghost{background:rgba(255,255,255,.1);color:#fff;border:1px solid var(--line);border-radius:10px;padding:13px 16px;cursor:pointer;font-weight:600}
+  button.ghost{background:rgba(255,255,255,.1);color:#fff;border:1px solid var(--edge);border-radius:13px;padding:15px 22px;cursor:pointer;font-weight:600}
 
   #result{display:none}
-  .verdict{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-  .vmain{font-size:30px;font-weight:800;letter-spacing:.5px}
-  .vamt{font-size:15px;opacity:.85;margin-top:2px}
-  .badge{padding:5px 12px;border-radius:999px;font-weight:700;font-size:13px}
-  .b-raise{background:#1f8f4d}.b-call{background:#2b6cb0}.b-check{background:#5a6b7a}.b-fold{background:#9b2b2b}
-  .meter{margin-top:16px}
-  .bar{height:12px;border-radius:999px;background:rgba(0,0,0,.3);overflow:hidden}
-  .fill{height:100%;background:linear-gradient(90deg,#d23b3b,#e8c14a 50%,#1f8f4d);width:0;transition:width .5s}
-  .stats{display:flex;gap:18px;margin-top:14px;flex-wrap:wrap}
-  .stat{font-size:13px}
-  .stat b{font-size:19px;display:block;font-weight:800}
-  .reason{margin-top:14px;font-size:13.5px;line-height:1.5;opacity:.9;border-top:1px solid var(--line);padding-top:12px}
-  .foot{font-size:11px;opacity:.45;text-align:center;margin-top:24px;line-height:1.6}
+  .verdict{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .vmain{font-size:34px;font-weight:800;letter-spacing:.5px;line-height:1}
+  .vamt{font-size:15px;color:var(--lo);margin-top:5px}
+  .badge{padding:6px 13px;border-radius:999px;font-weight:700;font-size:13px;background:rgba(255,255,255,.16);color:var(--hi)}
+  .b-raise,.b-call,.b-check,.b-fold{background:rgba(255,255,255,.16);color:var(--hi)}
+  .meter{margin-top:18px}
+  .bar{height:12px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden}
+  .fill{height:100%;background:linear-gradient(90deg,rgba(255,255,255,.35),#fff);width:0;transition:width .5s}
+  .stats{display:flex;gap:18px;margin-top:16px;flex-wrap:wrap}
+  .stat{font-size:13px;color:var(--faint)}
+  .stat b{font-size:19px;display:block;font-weight:800;color:var(--hi)}
+  .reason{margin-top:16px;font-size:13.5px;line-height:1.55;color:var(--lo);border-top:1px solid var(--line);padding-top:13px}
+  .foot{font-size:11px;color:var(--faint);text-align:center;margin-top:24px;line-height:1.6}
 </style>
 </head>
 <body>
