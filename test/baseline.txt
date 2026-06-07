@@ -1,0 +1,15 @@
+
+=== Poker engine accuracy — baseline ===
+dataset=1000/playercount  reference=200000 iters
+
+players | appIter |  equity MAE  |   p95   |   max   | dec-agree(bet) | dec-agree(check) | flip-rate
+--------|---------|--------------|---------|---------|----------------|------------------|----------
+   3    |  60000  |  0.145 pp  | 0.36pp | 0.72pp |    99.4%      |     99.8%       |  1.10%
+   4    |  60000  |  0.140 pp  | 0.40pp | 0.75pp |    100.0%      |     99.7%       |  0.60%
+   5    |  40000  |  0.143 pp  | 0.41pp | 0.80pp |    100.0%      |     99.6%       |  0.30%
+   6    |  40000  |  0.124 pp  | 0.38pp | 0.70pp |    99.8%      |     99.3%       |  1.10%
+
+(MAE/p95/max = abs error of app equity vs reference, in percentage points)
+(dec-agree = % of hands where app verdict matches reference verdict)
+(flip-rate = % of hands where two app runs give different verdicts)
+

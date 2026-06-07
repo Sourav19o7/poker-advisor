@@ -1,0 +1,14 @@
+import {evaluate7, simulate} from './engine.mjs';
+const c=(r,s)=>r*4+s;
+const royal=evaluate7([c(14,0),c(13,0),c(12,0),c(11,0),c(10,0),c(2,1),c(3,1)]);
+const quad =evaluate7([c(9,0),c(9,1),c(9,2),c(9,3),c(2,0),c(5,1),c(7,2)]);
+const fh   =evaluate7([c(9,0),c(9,1),c(9,2),c(2,0),c(2,1),c(5,1),c(7,2)]);
+const flush=evaluate7([c(2,0),c(5,0),c(9,0),c(11,0),c(13,0),c(3,1),c(4,2)]);
+const wheel=evaluate7([c(14,0),c(2,1),c(3,2),c(4,3),c(5,0),c(13,1),c(11,2)]);
+console.log('order royal>quad>fh>flush:', royal>quad && quad>fh && fh>flush);
+console.log('wheel is straight (cat4):', Math.floor(wheel/1048576)===4);
+const t=(name,h,p,exp)=>console.log(name, (simulate(h,[],p,80000).win*100).toFixed(1)+'%  (exp '+exp+')');
+t('AA vs1 ', [c(14,0),c(14,1)],2,'~85%');
+t('AA vs4 ', [c(14,0),c(14,1)],5,'~56%');
+t('AKs vs1', [c(14,0),c(13,0)],2,'~67%');
+t('72o vs1', [c(7,0),c(2,1)],2,'~32% win');

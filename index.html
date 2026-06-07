@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poker Advisor</title>
+<style>
+  :root{
+    --felt:#0b6b3a; --felt2:#085c31; --ink:#0d1f17; --gold:#e8c14a;
+    --card:#fdfdfb; --red:#d23b3b; --black:#1c1c1c; --line:rgba(255,255,255,.15);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(120% 90% at 50% 0%,var(--felt) 0%,var(--felt2) 55%,#053c20 100%);
+    color:#f4f7f4; min-height:100vh; padding:24px 16px 60px;
+  }
+  .wrap{max-width:640px;margin:0 auto}
+  h1{font-size:22px;font-weight:700;letter-spacing:.3px;margin:0 0 2px;display:flex;align-items:center;gap:8px}
+  h1 .chip{color:var(--gold)}
+  .sub{font-size:13px;opacity:.7;margin:0 0 22px}
+  .panel{background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px;backdrop-filter:blur(2px)}
+  .label{font-size:12px;text-transform:uppercase;letter-spacing:.8px;opacity:.65;margin:0 0 10px;font-weight:600}
+  .slots{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .slot{
+    width:48px;height:66px;border-radius:8px;border:2px dashed rgba(255,255,255,.25);
+    display:flex;align-items:center;justify-content:center;font-size:11px;opacity:.55;text-align:center;line-height:1.1;
+  }
+  .pcard{
+    width:48px;height:66px;border-radius:8px;background:var(--card);color:var(--black);
+    display:flex;align-items:center;justify-content:center;flex-direction:column;font-weight:700;
+    box-shadow:0 3px 8px rgba(0,0,0,.35);cursor:pointer;user-select:none;position:relative;
+  }
+  .pcard .r{font-size:20px;line-height:1}
+  .pcard .s{font-size:16px;line-height:1}
+  .pcard.red{color:var(--red)}
+  .pcard.mini{width:34px;height:46px}
+  .pcard.mini .r{font-size:14px}
+  .pcard.mini .s{font-size:12px}
+  .stage-tag{font-size:11px;opacity:.6;margin-left:6px}
+
+  .deck{margin-top:4px}
+  .suitrow{display:grid;grid-template-columns:repeat(13,1fr);gap:5px;margin-bottom:6px}
+  .dcard{
+    aspect-ratio:3/4;border-radius:6px;background:var(--card);color:var(--black);
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;
+    cursor:pointer;user-select:none;border:1px solid rgba(0,0,0,.15);transition:transform .05s;
+  }
+  .dcard:hover{transform:translateY(-2px)}
+  .dcard.red{color:var(--red)}
+  .dcard.used{opacity:.22;pointer-events:none;filter:grayscale(.4)}
+
+  .controls{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
+  .field{display:flex;flex-direction:column;gap:6px;flex:1;min-width:120px}
+  .field label{font-size:12px;opacity:.7}
+  input[type=number]{
+    background:rgba(0,0,0,.25);border:1px solid var(--line);color:#fff;border-radius:8px;
+    padding:9px 11px;font-size:15px;width:100%;
+  }
+  input:focus{outline:none;border-color:var(--gold)}
+  .btnrow{display:flex;gap:10px;margin-top:6px}
+  button.act{
+    flex:1;background:var(--gold);color:#3a2c00;border:none;border-radius:10px;padding:13px;
+    font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.3px;
+  }
+  button.act:active{transform:translateY(1px)}
+  button.ghost{background:rgba(255,255,255,.1);color:#fff;border:1px solid var(--line);border-radius:10px;padding:13px 16px;cursor:pointer;font-weight:600}
+
+  #result{display:none}
+  .verdict{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .vmain{font-size:30px;font-weight:800;letter-spacing:.5px}
+  .vamt{font-size:15px;opacity:.85;margin-top:2px}
+  .badge{padding:5px 12px;border-radius:999px;font-weight:700;font-size:13px}
+  .b-raise{background:#1f8f4d}.b-call{background:#2b6cb0}.b-check{background:#5a6b7a}.b-fold{background:#9b2b2b}
+  .meter{margin-top:16px}
+  .bar{height:12px;border-radius:999px;background:rgba(0,0,0,.3);overflow:hidden}
+  .fill{height:100%;background:linear-gradient(90deg,#d23b3b,#e8c14a 50%,#1f8f4d);width:0;transition:width .5s}
+  .stats{display:flex;gap:18px;margin-top:14px;flex-wrap:wrap}
+  .stat{font-size:13px}
+  .stat b{font-size:19px;display:block;font-weight:800}
+  .reason{margin-top:14px;font-size:13.5px;line-height:1.5;opacity:.9;border-top:1px solid var(--line);padding-top:12px}
+  .foot{font-size:11px;opacity:.45;text-align:center;margin-top:24px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><span class="chip">♠</span> Poker Advisor</h1>
+  <p class="sub">Texas Hold'em — pick your cards, get the math-backed call.</p>
+
+  <div class="panel">
+    <p class="label">Your hand</p>
+    <div class="slots" id="heroSlots"></div>
+  </div>
+
+  <div class="panel">
+    <p class="label">Community cards <span class="stage-tag" id="stageTag"></span></p>
+    <div class="slots" id="boardSlots"></div>
+  </div>
+
+  <div class="panel">
+    <p class="label">Pick cards (tap to add / remove)</p>
+    <div class="deck" id="deck"></div>
+  </div>
+
+  <div class="panel">
+    <div class="controls">
+      <div class="field">
+        <label>Players at table (incl. you)</label>
+        <input type="number" id="players" min="2" max="10" value="4">
+      </div>
+      <div class="field">
+        <label>Pot size (optional)</label>
+        <input type="number" id="pot" min="0" placeholder="e.g. 100">
+      </div>
+      <div class="field">
+        <label>Amount to call — enter if facing a bet</label>
+        <input type="number" id="toCall" min="0" placeholder="e.g. 20">
+      </div>
+    </div>
+    <div class="btnrow">
+      <button class="act" id="go">Calculate</button>
+      <button class="ghost" id="clear">Clear</button>
+    </div>
+  </div>
+
+  <div class="panel" id="result">
+    <div class="verdict">
+      <div>
+        <div class="vmain" id="vMain">—</div>
+        <div class="vamt" id="vAmt"></div>
+      </div>
+      <span class="badge" id="vBadge"></span>
+    </div>
+    <div class="meter">
+      <div class="bar"><div class="fill" id="fill"></div></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="sWin">—</b>Win</div>
+      <div class="stat"><b id="sTie">—</b>Tie</div>
+      <div class="stat"><b id="sEq">—</b>Equity</div>
+      <div class="stat"><b id="sHand">—</b>Likely best</div>
+    </div>
+    <div class="reason" id="reason"></div>
+  </div>
+
+  <p class="foot">
+    Win odds come from a Monte&nbsp;Carlo simulation (random opponents, ~50k deals).<br>
+    A decision aid for study &amp; play money — gamble responsibly.
+  </p>
+</div>
+
+<script>
+//============================ Card model ============================
+const RANKS = [2,3,4,5,6,7,8,9,10,11,12,13,14];
+const RANK_LABEL = {11:'J',12:'Q',13:'K',14:'A'};
+const SUITS = [
+  {sym:'♠',cls:'',code:'s'}, {sym:'♥',cls:'red',code:'h'},
+  {sym:'♦',cls:'red',code:'d'}, {sym:'♣',cls:'',code:'c'}
+];
+function rLabel(r){ return RANK_LABEL[r] || String(r); }
+function cardId(r,s){ return r*4+s; }
+function fromId(id){ return {r:Math.floor(id/4), s:id%4}; }
+
+let hero = [];   // up to 2 card ids
+let board = [];  // up to 5 card ids
+
+//============================ UI build ============================
+const deckEl = document.getElementById('deck');
+function buildDeck(){
+  deckEl.innerHTML='';
+  for(let s=0;s<4;s++){
+    const row=document.createElement('div'); row.className='suitrow';
+    for(const r of RANKS){
+      const id=cardId(r,s);
+      const c=document.createElement('div');
+      c.className='dcard '+SUITS[s].cls;
+      c.innerHTML = rLabel(r)+'<span>'+SUITS[s].sym+'</span>';
+      c.dataset.id=id;
+      c.onclick=()=>toggleCard(id);
+      row.appendChild(c);
+    }
+    deckEl.appendChild(row);
+  }
+}
+function toggleCard(id){
+  if(hero.includes(id)){ hero=hero.filter(x=>x!==id); render(); return; }
+  if(board.includes(id)){ board=board.filter(x=>x!==id); render(); return; }
+  if(hero.length<2){ hero.push(id); }
+  else if(board.length<5){ board.push(id); }
+  render();
+}
+function cardNode(id,mini){
+  const {r,s}=fromId(id);
+  const el=document.createElement('div');
+  el.className='pcard '+(mini?'mini ':'')+SUITS[s].cls;
+  el.innerHTML='<span class="r">'+rLabel(r)+'</span><span class="s">'+SUITS[s].sym+'</span>';
+  el.title='remove';
+  el.onclick=()=>toggleCard(id);
+  return el;
+}
+function render(){
+  // hero slots
+  const hs=document.getElementById('heroSlots'); hs.innerHTML='';
+  for(let i=0;i<2;i++){
+    if(hero[i]!=null) hs.appendChild(cardNode(hero[i],false));
+    else { const d=document.createElement('div'); d.className='slot'; d.textContent='card '+(i+1); hs.appendChild(d); }
+  }
+  // board slots
+  const bs=document.getElementById('boardSlots'); bs.innerHTML='';
+  const stages=['','','','flop','turn','river'];
+  for(let i=0;i<5;i++){
+    if(board[i]!=null) bs.appendChild(cardNode(board[i],false));
+    else { const d=document.createElement('div'); d.className='slot'; d.textContent='—'; bs.appendChild(d); }
+  }
+  let tag='Pre-flop';
+  if(board.length>=5) tag='River (all 5)';
+  else if(board.length===4) tag='Turn';
+  else if(board.length===3) tag='Flop';
+  document.getElementById('stageTag').textContent='· '+tag;
+  // grey out used in deck
+  const used=new Set([...hero,...board]);
+  document.querySelectorAll('.dcard').forEach(c=>{
+    c.classList.toggle('used', used.has(+c.dataset.id));
+  });
+}
+
+//============================ Hand evaluator (7 cards) ============================
+// returns an integer score; higher = better. Optimized: preallocated scratch,
+// no per-call array allocation (validated against textbook equities).
+const _rc=new Int8Array(15), _sc=new Int8Array(4), _sm=new Int32Array(4);
+function straightHigh(mask){
+  if(mask & (1<<14)) mask |= (1<<1); // ace low
+  for(let hi=14; hi>=5; hi--){
+    if((mask & (0b11111 << (hi-4))) === (0b11111 << (hi-4))) return hi;
+  }
+  return 0;
+}
+function evaluate7(ids){
+  _rc.fill(0); _sc.fill(0); _sm.fill(0);
+  let rankMask=0;
+  for(let i=0;i<ids.length;i++){
+    const id=ids[i], r=id>>2, s=id&3;
+    _rc[r]++; _sc[s]++; _sm[s]|=(1<<r); rankMask|=(1<<r);
+  }
+  let flushSuit=-1;
+  for(let s=0;s<4;s++) if(_sc[s]>=5){ flushSuit=s; break; }
+
+  // straight flush
+  if(flushSuit>=0){
+    const sf=straightHigh(_sm[flushSuit]);
+    if(sf>0) return 8*1048576 + sf;
+  }
+  // group ranks by multiplicity (high to low)
+  let q=0,t=0,t2=0,p1=0,p2=0;
+  for(let r=14;r>=2;r--){
+    const n=_rc[r];
+    if(n===4) q=r;
+    else if(n===3){ if(!t) t=r; else if(!t2) t2=r; }
+    else if(n===2){ if(!p1) p1=r; else if(!p2) p2=r; }
+  }
+  const enc=(cat,a=0,b=0,c=0,d=0,e=0)=>cat*1048576 + a*65536 + b*4096 + c*256 + d*16 + e;
+
+  // four of a kind
+  if(q){
+    let k=0; for(let r=14;r>=2;r--){ if(r!==q && _rc[r]>0){ k=r; break; } }
+    return enc(7,q,k);
+  }
+  // full house
+  if(t && (t2 || p1)) return enc(6, t, t2||p1);
+  // flush
+  if(flushSuit>=0){
+    const m=_sm[flushSuit], rs=[];
+    for(let r=14;r>=2 && rs.length<5;r--) if(m & (1<<r)) rs.push(r);
+    return enc(5,rs[0],rs[1],rs[2],rs[3],rs[4]);
+  }
+  // straight
+  const st=straightHigh(rankMask);
+  if(st>0) return enc(4,st);
+  // trips
+  if(t){
+    let k1=0,k2=0;
+    for(let r=14;r>=2;r--){ if(_rc[r]===1){ if(!k1)k1=r; else if(!k2){k2=r;break;} } }
+    return enc(3,t,k1,k2);
+  }
+  // two pair
+  if(p1 && p2){
+    let k=0; for(let r=14;r>=2;r--){ if(r!==p1&&r!==p2&&_rc[r]>0){k=r;break;} }
+    return enc(2,p1,p2,k);
+  }
+  // one pair
+  if(p1){
+    let k1=0,k2=0,k3=0;
+    for(let r=14;r>=2;r--){ if(_rc[r]===1){ if(!k1)k1=r; else if(!k2)k2=r; else if(!k3){k3=r;break;} } }
+    return enc(1,p1,k1,k2,k3);
+  }
+  // high card
+  let a=0,b=0,c=0,d=0,e=0;
+  for(let r=14;r>=2;r--){ if(_rc[r]===1){ if(!a)a=r;else if(!b)b=r;else if(!c)c=r;else if(!d)d=r;else if(!e){e=r;break;} } }
+  return enc(0,a,b,c,d,e);
+}
+const HAND_NAMES=['High card','One pair','Two pair','Three of a kind','Straight','Flush','Full house','Four of a kind','Straight flush'];
+function handName(score){ return HAND_NAMES[Math.floor(score/1048576)]; }
+
+//============================ Monte Carlo ============================
+// Seedable RNG (mulberry32) so identical inputs give identical results — a
+// given hand always returns the same verdict (no flicker between clicks).
+function mulberry32(a){
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function seedFrom(heroIds, boardIds, players){
+  let h = 2166136261 ^ players;
+  for(const id of [...heroIds, 99, ...boardIds]){ h = Math.imul(h ^ id, 16777619); }
+  return h >>> 0;
+}
+
+function simulate(heroIds, boardIds, players, iters, rng){
+  rng = rng || mulberry32(seedFrom(heroIds, boardIds, players));
+  const known=new Uint8Array(60);
+  for(const id of heroIds) known[id]=1;
+  for(const id of boardIds) known[id]=1;
+  const fullDeck=[];
+  for(let id=8;id<60;id++) if(!known[id]) fullDeck.push(id);
+
+  const opponents=players-1;
+  const boardNeed=5-boardIds.length;
+  const need=boardNeed+opponents*2;
+  const n=fullDeck.length;
+  let wins=0,ties=0;
+  const heroBestCount={};
+  const hero7=new Array(7), opp7=new Array(7);
+
+  for(let it=0;it<iters;it++){
+    for(let i=0;i<need;i++){
+      const j=i+Math.floor(rng()*(n-i));
+      const tmp=fullDeck[i]; fullDeck[i]=fullDeck[j]; fullDeck[j]=tmp;
+    }
+    let hi=0;
+    for(const id of heroIds) hero7[hi++]=id;
+    for(const id of boardIds) hero7[hi++]=id;
+    for(let i=0;i<boardNeed;i++) hero7[hi++]=fullDeck[i];
+    const heroScore=evaluate7(hero7);
+    const hn=Math.floor(heroScore/1048576);
+    heroBestCount[hn]=(heroBestCount[hn]||0)+1;
+
+    let beaten=false, tiedWith=0, idx=boardNeed;
+    for(let o=0;o<opponents;o++){
+      let oi=0;
+      opp7[oi++]=fullDeck[idx++]; opp7[oi++]=fullDeck[idx++];
+      for(const id of boardIds) opp7[oi++]=id;
+      for(let i=0;i<boardNeed;i++) opp7[oi++]=fullDeck[i];
+      const oppScore=evaluate7(opp7);
+      if(oppScore>heroScore){ beaten=true; break; }
+      else if(oppScore===heroScore){ tiedWith++; }
+    }
+    if(beaten) continue;
+    if(tiedWith>0) ties++; else wins++;
+  }
+  let topCat=0,topN=-1;
+  for(const k in heroBestCount){ if(heroBestCount[k]>topN){topN=heroBestCount[k];topCat=+k;} }
+  return { win:wins/iters, tie:ties/iters, topCat };
+}
+
+//============================ Decision logic ============================
+// Always returns ONE decisive action.
+function decide(eq, win, tie, players, pot, toCall){
+  const fairShare = 1/players;
+  const eqp = (eq*100).toFixed(1);
+
+  // ---- Case A: you're facing a bet (you told us the amount to call) ----
+  if(toCall>0){
+    const potOdds = toCall/(pot+toCall);
+    const need = (potOdds*100).toFixed(1);
+    const evCall = eq*(pot+toCall) - toCall; // EV of calling
+
+    if(eq < potOdds){
+      return {action:'FOLD', badge:'b-fold', amount:'',
+        reason:`You need ${need}% equity to call ${toCall} into a ${pot} pot, but you only have ${eqp}%. Calling loses chips long-term (EV ≈ ${evCall.toFixed(1)}). Fold.`};
+    }
+    if(eq > 0.66){
+      const raise = Math.round((pot+toCall)*0.75);
+      return {action:'RAISE', badge:'b-raise', amount:`raise to ~${raise}`,
+        reason:`Big edge: ${eqp}% equity vs the ${need}% you need. Don't just call — raise ~¾ pot (${raise}) to charge weaker hands.`};
+    }
+    return {action:'CALL', badge:'b-call', amount:`call ${toCall}`,
+      reason:`Call. Your ${eqp}% equity beats the ${need}% break-even, so calling profits over time (EV ≈ +${evCall.toFixed(1)}). Not strong enough to raise for value.`};
+  }
+
+  // ---- Case B: no bet to call yet (you act first / it's checked to you) ----
+  if(eq >= 0.58){
+    const bet = pot>0 ? Math.round(pot*0.66) : null;
+    return {action:'BET', badge:'b-raise', amount: bet ? `bet ~${bet} (⅔ pot)` : 'bet ~½–¾ pot',
+      reason:`Bet for value. ${eqp}% equity is well above your ${(fairShare*100).toFixed(1)}% fair share — build the pot while you're ahead.`};
+  }
+  if(eq >= fairShare){
+    const bet = pot>0 ? Math.round(pot*0.4) : null;
+    return {action:'BET', badge:'b-call', amount: bet ? `small bet ~${bet}` : 'small bet (~⅓ pot)',
+      reason:`Slightly ahead: ${eqp}% vs ${(fairShare*100).toFixed(1)}% fair share. A small value bet is fine. If someone bets big into you, be ready to fold.`};
+  }
+  return {action:'CHECK', badge:'b-check', amount:'',
+    reason:`Don't bet. ${eqp}% equity is below your ${(fairShare*100).toFixed(1)}% fair share — check and take a free card. If you're facing a bet, fill in "Amount to call" above for a call/fold verdict.`};
+}
+
+//============================ Wire up ============================
+document.getElementById('clear').onclick=()=>{ hero=[]; board=[]; document.getElementById('result').style.display='none'; render(); };
+
+document.getElementById('go').onclick=()=>{
+  if(hero.length<2){ alert('Pick your 2 hole cards first.'); return; }
+  if(board.length===1||board.length===2){ alert('Community cards must be 0 (pre-flop), 3, 4 or 5.'); return; }
+  const players=Math.max(2,Math.min(10, +document.getElementById('players').value||2));
+  const pot=Math.max(0, +document.getElementById('pot').value||0);
+  const toCall=Math.max(0, +document.getElementById('toCall').value||0);
+
+  const btn=document.getElementById('go'); btn.textContent='Calculating…'; btn.disabled=true;
+  setTimeout(()=>{
+    // optimized evaluator lets us run 100k deals everywhere and stay snappy;
+    // seeded RNG means the same hand always returns the same equity/verdict.
+    const iters = players<=7 ? 100000 : 60000;
+    const sim=simulate(hero, board, players, iters);
+    const win=sim.win, tie=sim.tie;
+    const eq=win + tie*0.5;
+    const d=decide(eq, win, tie, players, pot, toCall);
+
+    document.getElementById('result').style.display='block';
+    document.getElementById('vMain').textContent=d.action;
+    document.getElementById('vAmt').textContent=d.amount||'';
+    const badge=document.getElementById('vBadge');
+    badge.className='badge '+d.badge;
+    badge.textContent=(eq*100).toFixed(1)+'% equity';
+    document.getElementById('fill').style.width=(eq*100).toFixed(1)+'%';
+    document.getElementById('sWin').textContent=(win*100).toFixed(1)+'%';
+    document.getElementById('sTie').textContent=(tie*100).toFixed(1)+'%';
+    document.getElementById('sEq').textContent=(eq*100).toFixed(1)+'%';
+    document.getElementById('sHand').textContent=HAND_NAMES[sim.topCat];
+    document.getElementById('reason').textContent=d.reason;
+
+    btn.textContent='Calculate'; btn.disabled=false;
+    document.getElementById('result').scrollIntoView({behavior:'smooth',block:'nearest'});
+  },20);
+};
+
+buildDeck();
+render();
+</script>
+</body>
+</html>
